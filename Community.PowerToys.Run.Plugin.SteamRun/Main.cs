@@ -109,6 +109,19 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
         }
 
         /// <summary>
+        /// Show the given app in Steam Library
+        /// </summary>
+        /// <param name="appID">ID of the app to show</param>
+        private static void ShowSteamAppInLibrary(int appID)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = $"steam://open/games/details/{appID}",
+                UseShellExecute = true,
+            });
+        }
+
+        /// <summary>
         /// Open install directory of the given Steam app 
         /// </summary>
         private void OpenInstallDirectory(SteamLibraryApp app)
@@ -210,6 +223,20 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                     },
                 });
             }
+            contextMenus.Add(new ContextMenuResult
+            {
+                PluginName = Name,
+                Title = "Show in Library (Ctrl+Enter)",
+                FontFamily = "Segoe MDL2 Assets",
+                Glyph = "\xE8A7", // Open External
+                AcceleratorModifiers = ModifierKeys.Control,
+                AcceleratorKey = Key.Enter,
+                Action = _ =>
+                {
+                    ShowSteamAppInLibrary(app.ID);
+                    return true;
+                },
+            });
 
             return contextMenus;
         }
