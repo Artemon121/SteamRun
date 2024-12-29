@@ -1,0 +1,14 @@
+{
+  "ID": "5369f2045c3c40c9909545a72baeebf6",
+  "ActionKeyword": "play",
+  "IsGlobal": false,
+  "Name": "SteamRun",
+  "Author": "Artemon121",
+  "Version": "1.0.0",
+  "Language": "csharp",
+  "Website": "https://github.com/Artemon121/SteamRun",
+  "ExecuteFileName": "Community.PowerToys.Run.Plugin.SteamRun.dll",
+  "IcoPathDark": "Images\\steam-dark.png",
+  "IcoPathLight": "Images\\steam-light.png",
+  "DynamicLoading": true
+}
