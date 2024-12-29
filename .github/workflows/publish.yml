@@ -40,11 +40,13 @@ jobs:
       - name: Prepare artifact
         run: |
           Remove-Item -Path ${{env.PROJECT_DIRECTORY}}/bin/* -Recurse -Include *.xml, *.pdb, PowerToys.*, Wox.*
-          Remove-Item -Path ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/publish/runtimes* -Recurse
-          Rename-Item -Path ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/publish -NewName $env:PLUGIN_NAME
+          Remove-Item -Path ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/publish/runtimes/* -Recurse
+          New-Item -Path ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/${{env.PLUGIN_NAME}} -ItemType Directory
+          Move-Item -Path ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/publish -Destination ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/${{env.PLUGIN_NAME}}
+          Rename-Item -Path ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/${{env.PLUGIN_NAME}}/publish -NewName $env:PLUGIN_NAME
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{env.PLUGIN_NAME}}-${{env.PLUGIN_VERSION}}-${{matrix.platform}}
-          path: ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/*
+          path: ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/${{env.PLUGIN_NAME}}
