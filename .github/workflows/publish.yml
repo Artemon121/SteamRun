@@ -1,0 +1,48 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+env:
+  PLUGIN_NAME: SteamRun
+  PROJECT_DIRECTORY: Community.PowerToys.Run.Plugin.SteamRun
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [x64, ARM64]
+
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version
+        run: |
+          $json = Get-Content -Path $env:PROJECT_DIRECTORY\plugin.json -Raw | ConvertFrom-Json
+          echo "PLUGIN_VERSION=$($json.version)" >> $env:GITHUB_ENV
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Publish
+        run: dotnet publish ${{env.PROJECT_DIRECTORY}}.sln -c Release /p:Platform=${{matrix.platform}}
+
+      - name: Prepare artifact
+        run: |
+          Remove-Item -Path ${{env.PROJECT_DIRECTORY}}/bin/* -Recurse -Include *.xml, *.pdb, PowerToys.*, Wox.*
+          Remove-Item -Path ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/publish/runtimes* -Recurse
+          Rename-Item -Path ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/publish -NewName $env:PLUGIN_NAME
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{env.PLUGIN_NAME}}-${{env.PLUGIN_VERSION}}-${{matrix.platform}}
+          path: ${{env.PROJECT_DIRECTORY}}/bin/${{matrix.platform}}/Release/*
