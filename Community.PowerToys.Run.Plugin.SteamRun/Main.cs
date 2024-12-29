@@ -103,7 +103,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "steam://run/" + appID,
+                FileName = $"steam://launch/{appID}/dialog",
                 UseShellExecute = true,
             });
         }
