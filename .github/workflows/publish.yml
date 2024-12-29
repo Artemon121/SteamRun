@@ -33,7 +33,7 @@ jobs:
           dotnet-version: 9.0.x
 
       - name: Publish
-        run: dotnet publish ${{env.PROJECT_DIRECTORY}}.sln -c Release /p:Platform=${{matrix.platform}}
+        run: dotnet publish ${{env.PLUGIN_NAME}}.sln -c Release /p:Platform=${{matrix.platform}}
 
       - name: Prepare artifact
         run: |
