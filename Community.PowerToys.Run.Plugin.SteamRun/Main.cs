@@ -5,6 +5,7 @@ using System.IO;
 using System.Security;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Wox.Infrastructure;
 using Wox.Plugin;
 using Wox.Plugin.Logger;
 
@@ -146,8 +147,8 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                 var libraryFolders = SteamFinder.FindLibraryFolders(SteamInstallDir);
                 var appLogos = SteamFinder.FindAppLogos(SteamInstallDir);
                 var allApps = libraryFolders.SelectMany(SteamFinder.FindApps);
-
-                var apps = allApps.Where(app => app.Name.Contains(query.Search, StringComparison.OrdinalIgnoreCase));
+                
+                var apps = allApps.Where(app => StringMatcher.FuzzySearch(query.Search, app.Name).IsSearchPrecisionScoreMet());
                 if (HideApplications) apps = apps.Where(app => app.GetType(SteamInstallDir) != ESteamAppType.Application);
                 if (HideTools) apps = apps.Where(app => app.GetType(SteamInstallDir) != ESteamAppType.Tool);
                 if (HideMusic) apps = apps.Where(app => app.GetType(SteamInstallDir) != ESteamAppType.Music);
