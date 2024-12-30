@@ -30,6 +30,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
         private bool HideApplications { get; set; }
         private bool HideTools { get; set; }
         private bool HideMusic { get; set; }
+        private bool HideSourceMods { get; set; }
 
         /// <summary>
         /// Additional options for the plugin.
@@ -55,6 +56,13 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                 DisplayDescription = "Don't show music in the search results",
                 PluginOptionType = PluginAdditionalOption.AdditionalOptionType.Checkbox,
                 Value = HideMusic,
+            },
+            new() {
+                Key = nameof(HideSourceMods),
+                DisplayLabel = "Hide Source Mods",
+                DisplayDescription = "Don't show Source Mods in the search results",
+                PluginOptionType = PluginAdditionalOption.AdditionalOptionType.Checkbox,
+                Value = HideSourceMods,
             },
             new() {
                 Key = nameof(SteamInstallDir),
@@ -104,6 +112,19 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
             Process.Start(new ProcessStartInfo
             {
                 FileName = $"steam://launch/{appID}/dialog",
+                UseShellExecute = true,
+            });
+        }
+
+        /// <summary>
+        /// Run the given Source Mod in Steam
+        /// </summary>
+        /// <param name="mod">Source Mod to run</param>
+        private static void RunSourceMod(SourceMod mod)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = $"steam://launch/{mod.BaseAppId}/-steam -game \"{mod.Path}\"".Replace(" ", "%20"),
                 UseShellExecute = true,
             });
         }
@@ -200,6 +221,29 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                         },
                     });
                 };
+
+                if (!HideSourceMods)
+                {
+                    var sourceMods = libraryFolders.SelectMany(SteamFinder.FindSourceMods);
+                    sourceMods = sourceMods.Where(mod =>
+                        StringMatcher.FuzzySearch(query.Search, mod.Name).IsSearchPrecisionScoreMet() |
+                        StringMatcher.FuzzySearch(query.Search, GetAbbreviation(mod.Name)).IsSearchPrecisionScoreMet()
+                    );
+                    foreach (var mod in sourceMods)
+                    {
+                        results.Add(new Result
+                        {
+                            IcoPath = appLogos.GetValueOrDefault(mod.BaseAppId, IconPath!),
+                            Title = mod.Name,
+                            SubTitle = $"Source Mod",
+                            Action = c =>
+                            {
+                                RunSourceMod(mod);
+                                return true;
+                            },
+                        });
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -275,6 +319,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
             HideApplications = settings.AdditionalOptions.SingleOrDefault(x => x.Key == nameof(HideApplications))?.Value ?? false;
             HideTools = settings.AdditionalOptions.SingleOrDefault(x => x.Key == nameof(HideTools))?.Value ?? false;
             HideMusic = settings.AdditionalOptions.SingleOrDefault(x => x.Key == nameof(HideMusic))?.Value ?? false;
+            HideSourceMods = settings.AdditionalOptions.SingleOrDefault(x => x.Key == nameof(HideSourceMods))?.Value ?? false;
             var steamInstallDirSettings = settings.AdditionalOptions.SingleOrDefault(x => x.Key == nameof(SteamInstallDir));
             if (steamInstallDirSettings != null)
             {

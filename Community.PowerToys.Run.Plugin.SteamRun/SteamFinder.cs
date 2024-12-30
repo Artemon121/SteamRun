@@ -169,5 +169,33 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
             var type = common.Any(x => x.Name == "type") ? (string)common["type"] : "unknown";
             return Enum.TryParse<ESteamAppType>(type, true, out var result) ? result : ESteamAppType.Unknown;
         }
+
+        /// <summary>
+        /// Find all source mods in the given library folder.
+        /// </summary>
+        /// <param name="libraryFolder">The Steam library folder to search in</param>
+        /// <returns>List of Source Mods</returns>
+        public static List<SourceMod> FindSourceMods(SteamLibraryFolder libraryFolder)
+        {
+            var sourceModsFolder = Path.Join(libraryFolder.Path, "steamapps", "sourcemods");
+            if (!Directory.Exists(sourceModsFolder)) return [];
+            
+            var sourceMods = new List<SourceMod>();
+            Directory.EnumerateDirectories(sourceModsFolder).ToList().ForEach((mod) =>
+            {
+                var modInfo = Path.Join(mod, "gameinfo.txt");
+                if (!File.Exists(modInfo)) return;
+                var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
+                KVObject data = kv.Deserialize(File.OpenRead(modInfo));
+
+                sourceMods.Add(new SourceMod(
+                    (string)data["game"],
+                    mod,
+                    (int)data.Children.First(data => data.Name == "FileSystem")["SteamAppId"]
+                ));
+            });
+
+            return sourceMods;
+        }
     }
 }
