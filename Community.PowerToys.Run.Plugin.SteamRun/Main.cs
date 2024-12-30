@@ -146,6 +146,20 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
         }
 
         /// <summary>
+        /// Get the abbreviation of the given string. One-word strings return an empty string.
+        /// </summary>
+        /// <example>"Half-Life 2" -> "HL2"</example>
+        /// <example>"Portal 2" -> "P2"</example>
+        /// <example>"Portal" -> ""</example>
+        private static string GetAbbreviation(string str)
+        {
+            str = str.Replace("-", " ").Replace(":", "").Replace(".", "").Replace("-", "");
+            var words = str.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (words.Length == 1) return "";
+            return words.Aggregate("", (acc, word) => acc + word[0]).ToUpper();
+        }
+
+        /// <summary>
         /// Return a filtered list, based on the given query.
         /// </summary>
         /// <param name="query">The query to filter the list.</param>
@@ -160,8 +174,12 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                 var libraryFolders = SteamFinder.FindLibraryFolders(SteamInstallDir);
                 var appLogos = SteamFinder.FindAppLogos(SteamInstallDir);
                 var allApps = libraryFolders.SelectMany(SteamFinder.FindApps);
-                
-                var apps = allApps.Where(app => StringMatcher.FuzzySearch(query.Search, app.Name).IsSearchPrecisionScoreMet());
+
+
+                var apps = allApps.Where(app => 
+                    StringMatcher.FuzzySearch(query.Search, app.Name).IsSearchPrecisionScoreMet() |
+                    StringMatcher.FuzzySearch(query.Search, GetAbbreviation(app.Name)).IsSearchPrecisionScoreMet()
+                );
                 if (HideApplications) apps = apps.Where(app => app.GetType(SteamInstallDir) != ESteamAppType.Application);
                 if (HideTools) apps = apps.Where(app => app.GetType(SteamInstallDir) != ESteamAppType.Tool);
                 if (HideMusic) apps = apps.Where(app => app.GetType(SteamInstallDir) != ESteamAppType.Music);
