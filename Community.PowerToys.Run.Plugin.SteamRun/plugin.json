@@ -4,7 +4,7 @@
   "IsGlobal": false,
   "Name": "SteamRun",
   "Author": "Artemon121",
-  "Version": "1.0.0",
+  "Version": "1.1.0",
   "Language": "csharp",
   "Website": "https://github.com/Artemon121/SteamRun",
   "ExecuteFileName": "Community.PowerToys.Run.Plugin.SteamRun.dll",
