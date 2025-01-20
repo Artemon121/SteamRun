@@ -109,7 +109,12 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
             var appLogos = new Dictionary<int, string>();
             var libraryCache = Path.Join(steamInstallDir, "appcache", "librarycache");
             var libraryCacheAssetsVDF = Path.Join(libraryCache, "assets.vdf");
-            if (!File.Exists(libraryCacheAssetsVDF)) return appLogos;
+            if (!File.Exists(libraryCacheAssetsVDF))
+            {
+                // Valve seems to have recently changed the path
+                libraryCacheAssetsVDF = Path.Join(libraryCache, "assetcache.vdf");
+                if (!File.Exists(libraryCacheAssetsVDF)) return appLogos;
+            };
 
             var hash = SHA1.Create().ComputeHash(File.OpenRead(libraryCacheAssetsVDF));
             if (appLogosHash != null && hash.SequenceEqual(appLogosHash) && previousAppLogos != null) return previousAppLogos;
