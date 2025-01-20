@@ -10,9 +10,10 @@ A [PowerToys Run](https://aka.ms/PowerToysOverview_PowerToysRun) plugin to searc
 
 ### Manual
 
+1. Close PowerToys
 1. Download the [latest release](https://github.com/Artemon121/SteamRun/releases/latest) zip file
 1. Extract it to `%LOCALAPPDATA%\Microsoft\PowerToys\PowerToys Run\Plugins`
-1. Restart PowerToys
+1. Open PowerToys
 
 ### Via [ptr](https://github.com/8LWXpg/ptr)
 
@@ -23,8 +24,8 @@ ptr add SteamRun Artemon121/SteamRun
 ## Usage
 
 1. Open PowerToys Run (default shortcut is <kbd>Alt+Space</kbd>)
-2. Type `play` followed by your search query
-3. Select a search result and press `Enter` to launch
+2. Type `sr` followed by your search query
+3. Select a search result and press <kbd>Enter</kbd> to launch
 
 ## Building
 
