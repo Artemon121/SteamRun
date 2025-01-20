@@ -31,6 +31,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
         private bool HideTools { get; set; }
         private bool HideMusic { get; set; }
         private bool HideSourceMods { get; set; }
+        private bool HideShortcuts { get; set; }
 
         /// <summary>
         /// Additional options for the plugin.
@@ -61,6 +62,13 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                 Key = nameof(HideSourceMods),
                 DisplayLabel = "Hide Source Mods",
                 DisplayDescription = "Don't show Source Mods in the search results",
+                PluginOptionType = PluginAdditionalOption.AdditionalOptionType.Checkbox,
+                Value = HideSourceMods,
+            },
+            new() {
+                Key = nameof(HideShortcuts),
+                DisplayLabel = "Hide Non-Steam Game Shortcuts",
+                DisplayDescription = "Don't show non-steam game shortcuts in the search results",
                 PluginOptionType = PluginAdditionalOption.AdditionalOptionType.Checkbox,
                 Value = HideSourceMods,
             },
@@ -133,7 +141,6 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                 var appLogos = SteamFinder.FindAppLogos(SteamInstallDir);
                 var allApps = libraryFolders.SelectMany(SteamFinder.FindApps);
 
-
                 var apps = allApps.Where(app => 
                     StringMatcher.FuzzySearch(query.Search, app.Name).IsSearchPrecisionScoreMet() |
                     StringMatcher.FuzzySearch(query.Search, GetAbbreviation(app.Name)).IsSearchPrecisionScoreMet()
@@ -178,6 +185,27 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                                 mod.Run();
                                 return true;
                             },
+                        });
+                    }
+                }
+                if (!HideShortcuts)
+                {
+                    var currentUser = SteamFinder.FindLoginUsers(SteamInstallDir).First(kv => kv.Value.MostRecent == true).Value;
+                    var shortcuts = SteamFinder.FindShortcuts(SteamInstallDir, currentUser);
+                    var filteredShortcuts = shortcuts.Where(shortcut =>
+                        StringMatcher.FuzzySearch(query.Search, shortcut.AppName).IsSearchPrecisionScoreMet() |
+                        StringMatcher.FuzzySearch(query.Search, GetAbbreviation(shortcut.AppName)).IsSearchPrecisionScoreMet()
+                    );
+                    foreach (var shortcut in filteredShortcuts) {
+                        results.Add(new Result
+                        {
+                            Title = shortcut.AppName,
+                            SubTitle = $"Non-Steam Game",
+                            Action = c =>
+                            {
+                                shortcut.Run();
+                                return true;
+                            }
                         });
                     }
                 }
@@ -257,6 +285,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
             HideTools = settings.AdditionalOptions.SingleOrDefault(x => x.Key == nameof(HideTools))?.Value ?? false;
             HideMusic = settings.AdditionalOptions.SingleOrDefault(x => x.Key == nameof(HideMusic))?.Value ?? false;
             HideSourceMods = settings.AdditionalOptions.SingleOrDefault(x => x.Key == nameof(HideSourceMods))?.Value ?? false;
+            HideShortcuts = settings.AdditionalOptions.SingleOrDefault(x => x.Key == nameof(HideShortcuts))?.Value ?? false;
             var steamInstallDirSettings = settings.AdditionalOptions.SingleOrDefault(x => x.Key == nameof(SteamInstallDir));
             if (steamInstallDirSettings != null)
             {

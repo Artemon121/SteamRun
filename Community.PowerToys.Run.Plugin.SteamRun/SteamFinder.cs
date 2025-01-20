@@ -1,9 +1,13 @@
 ﻿using Community.PowerToys.Run.Plugin.SteamRun.SteamAppInfo;
+using ManagedCommon;
 using Microsoft.Win32;
+using System.ComponentModel;
 using System.IO;
 using System.Security;
 using System.Security.Cryptography;
+using System.Windows.Forms.Integration;
 using ValveKeyValue;
+using Wox.Plugin.Logger;
 
 namespace Community.PowerToys.Run.Plugin.SteamRun
 {
@@ -140,7 +144,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
         /// Find and parse app info for all Steam apps.
         /// </summary>
         /// <param name="steamInstallDir">The Steam installation directory></param>
-        /// <returns>Dictionary that maps app ID to <see cref="AppInfo"</returns>
+        /// <returns>Dictionary that maps app ID to <see cref="AppInfo" /></returns>
         public static Dictionary<int, AppInfo> FindAppInfo(string steamInstallDir)
         {
             var appInfoDict = new Dictionary<int, AppInfo>();
@@ -153,7 +157,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
 
             var appInfoParser = new AppInfoParser();
             appInfoParser.Read(appInfoVDF);
-            
+
             appInfoParser.Apps.ForEach((app) => appInfoDict.Add((int)app.AppID, app));
 
             previousAppInfoDict = appInfoDict;
@@ -184,7 +188,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
         {
             var sourceModsFolder = Path.Join(libraryFolder.Path, "steamapps", "sourcemods");
             if (!Directory.Exists(sourceModsFolder)) return [];
-            
+
             var sourceMods = new List<SourceMod>();
             Directory.EnumerateDirectories(sourceModsFolder).ToList().ForEach((mod) =>
             {
@@ -201,6 +205,82 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
             });
 
             return sourceMods;
+        }
+
+
+        private static byte[]? loginUsersHash = null;
+        private static Dictionary<ulong, SteamUser>? previousLoginUsers = null;
+        /// <summary>
+        /// Find all logged in users
+        /// </summary>
+        /// <param name="steamInstallDir">The Steam installation directory></param>
+        /// <returns>Dictionary that maps SteamID64 to <see cref="SteamUser" /></returns>
+        public static Dictionary<ulong, SteamUser> FindLoginUsers(string steamInstallDir)
+        {
+            var steamUsers = new Dictionary<ulong, SteamUser>();
+            var configFolder = Path.Join(steamInstallDir, "config");
+            if (!Directory.Exists(configFolder)) return steamUsers;
+
+            var loginUsersVDF = Path.Join(configFolder, "loginusers.vdf");
+            if (!File.Exists(loginUsersVDF)) return steamUsers;
+
+            var hash = SHA1.Create().ComputeHash(File.OpenRead(loginUsersVDF));
+            if (loginUsersHash != null && hash.SequenceEqual(loginUsersHash) && previousLoginUsers != null) return previousLoginUsers;
+            else loginUsersHash = hash;
+
+            var stream = File.OpenRead(loginUsersVDF);
+            var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
+            KVObject data = kv.Deserialize(stream);
+            foreach (var child in data.Children)
+            {
+                var timestamp = child.Any(x => x.Name == "Timestamp") ? (double)child["Timestamp"] : 0.0;
+                if (ulong.TryParse(child.Name, out ulong steamId))
+                {
+                    Log.Info((string)child["PersonaName"], typeof(Main));
+                    steamUsers.Add(steamId, new SteamUser(
+                        steamId,
+                        (string?)child["AccountName"],
+                        (string?)child["PersonaName"],
+                        Convert.ToBoolean((int?)child["RememberPassword"]),
+                        Convert.ToBoolean((int?)child["WantsOfflineMode"]),
+                        Convert.ToBoolean((int?)child["SkipOfflineModeWarning"]),
+                        Convert.ToBoolean((int?)child["AllowAutoLogin"]),
+                        Convert.ToBoolean((int?)child["MostRecent"]),
+                        DateTime.UnixEpoch.AddSeconds(timestamp)
+                    ));
+                }
+            }
+            previousLoginUsers = steamUsers;
+            return steamUsers;
+        }
+
+
+        /// <summary>
+        /// Finds all game shortcuts for the given user
+        /// </summary>
+        /// <param name="steamInstallDir">The Steam installation directory></param>
+        /// <param name="user">The Steam user for which to find the shortcuts></param>
+        public static List<SteamShortcut> FindShortcuts(string steamInstallDir, SteamUser user)
+        {
+            var shortcuts = new List<SteamShortcut>();
+            var userConfigFolder = Path.Join(steamInstallDir, "userdata", SteamUser.SteamID64ToAccountId(user.SteamID).ToString(), "config");
+            if (!Path.Exists(userConfigFolder)) return [];
+            var shortcutsVDF = Path.Join(userConfigFolder, "shortcuts.vdf");
+            if (!File.Exists(shortcutsVDF)) return [];
+
+            var stream = File.OpenRead(shortcutsVDF);
+            var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
+            KVObject data = kv.Deserialize(stream);
+            foreach (var child in data.Children)
+            {
+                shortcuts.Add(new SteamShortcut(
+                    (int)child["appid"],
+                    (string)child["AppName"],
+                    (string?)child["Exe"],
+                    (string?)child["StartDir"]
+                ));
+            }
+            return shortcuts;
         }
     }
 }
