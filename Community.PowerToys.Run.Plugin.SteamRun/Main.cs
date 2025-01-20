@@ -1,6 +1,5 @@
 ﻿using ManagedCommon;
 using Microsoft.PowerToys.Settings.UI.Library;
-using System.Diagnostics;
 using System.IO;
 using System.Security;
 using System.Windows.Controls;

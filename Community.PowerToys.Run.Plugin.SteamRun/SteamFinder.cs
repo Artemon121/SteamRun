@@ -1,11 +1,8 @@
 ﻿using Community.PowerToys.Run.Plugin.SteamRun.SteamAppInfo;
-using ManagedCommon;
 using Microsoft.Win32;
-using System.ComponentModel;
 using System.IO;
 using System.Security;
 using System.Security.Cryptography;
-using System.Windows.Forms.Integration;
 using ValveKeyValue;
 using Wox.Plugin.Logger;
 
