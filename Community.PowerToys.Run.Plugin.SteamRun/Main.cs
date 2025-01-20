@@ -104,69 +104,6 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
         }
 
         /// <summary>
-        /// Run the given app in Steam
-        /// </summary>
-        /// <param name="appID">ID of the app to run</param>
-        private static void RunSteamApp(int appID)
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = $"steam://launch/{appID}/dialog",
-                UseShellExecute = true,
-            });
-        }
-
-        /// <summary>
-        /// Run the given Source Mod in Steam
-        /// </summary>
-        /// <param name="mod">Source Mod to run</param>
-        private static void RunSourceMod(SourceMod mod)
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = $"steam://launch/{mod.BaseAppId}/-steam -game \"{mod.Path}\"".Replace(" ", "%20"),
-                UseShellExecute = true,
-            });
-        }
-
-        /// <summary>
-        /// Show the given app in Steam Library
-        /// </summary>
-        /// <param name="appID">ID of the app to show</param>
-        private static void ShowSteamAppInLibrary(int appID)
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = $"steam://open/games/details/{appID}",
-                UseShellExecute = true,
-            });
-        }
-
-        /// <summary>
-        /// Open install directory of the given Steam app 
-        /// </summary>
-        private void OpenInstallDirectory(SteamLibraryApp app)
-        {
-            if (SteamInstallDir == null) return;
-
-            var type = app.GetType(SteamInstallDir);
-            var steamappsSubfolder = type switch
-            {
-                ESteamAppType.Music => "music",
-                _ => "common",
-            };
-            var path = Path.Join(app.LibraryFolder.Path, "steamapps", steamappsSubfolder, app.InstallDir);
-
-            if (!Path.Exists(path)) path = SteamInstallDir;
-
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = path,
-                UseShellExecute = true,
-            });
-        }
-
-        /// <summary>
         /// Get the abbreviation of the given string. One-word strings return an empty string.
         /// </summary>
         /// <example>"Half-Life 2" -> "HL2"</example>
@@ -216,7 +153,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                         ContextData = app,
                         Action = c =>
                         {
-                            RunSteamApp(app.ID);
+                            app.Run();
                             return true;
                         },
                     });
@@ -238,7 +175,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                             SubTitle = $"Source Mod",
                             Action = c =>
                             {
-                                RunSourceMod(mod);
+                                mod.Run();
                                 return true;
                             },
                         });
@@ -268,7 +205,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
         {
             var contextMenus = new List<ContextMenuResult>();
             if (selectedResult.ContextData is not SteamLibraryApp app) return [];
-            if (app.InstallDir != null && app.LibraryFolder != null)
+            if (app.InstallDir != null && app.LibraryFolder != null && SteamInstallDir != null)
             {
                 contextMenus.Add(new ContextMenuResult
                 {
@@ -280,7 +217,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                     AcceleratorKey = Key.O,
                     Action = _ =>
                     {
-                        OpenInstallDirectory(app);
+                        app.OpenInstallDirectory(SteamInstallDir);
                         return true;
                     },
                 });
@@ -295,7 +232,7 @@ namespace Community.PowerToys.Run.Plugin.SteamRun
                 AcceleratorKey = Key.Enter,
                 Action = _ =>
                 {
-                    ShowSteamAppInLibrary(app.ID);
+                    app.ShowInLibrary();
                     return true;
                 },
             });
