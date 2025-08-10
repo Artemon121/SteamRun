@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Community.PowerToys.Run.Plugin.Dependencies" Version="0.87.1" />
-    <PackageReference Include="ValveKeyValue" Version="0.12.0.391" />
+    <PackageReference Include="ValveKeyValue" Version="0.20.0.417" />
   </ItemGroup>
 
   <ItemGroup>
